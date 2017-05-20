@@ -15,13 +15,14 @@ var INVALID_DIR = "%$@|"
 //var css = flag.Bool("css", true, "-css=<bool> 是否进行css压缩")
 
 var html = flag.String("html", INVALID_DIR, "-html=<string> html path")
-var jsdir = flag.String("jsdir", INVALID_DIR, "-jsdir=<string> js file root-path.must be web-root-path")
+var htmldir = flag.String("htmldir", INVALID_DIR, "-htmldir=<string> html root-path. must be web-root-path")
+var jsdir = flag.String("jsdir", INVALID_DIR, "-jsdir=<string> js file root-path. must be web-root-path")
 var cssdir = flag.String("cssdir", INVALID_DIR, "-cssdir=<string> css file root-path.must be web-root-path")
 
 //var html = flag.String("html", "promotionmanager.html", "-htmldir=<string> html文件路径")
 //var jsdir = flag.String("jsdir", "test", "-jsdir=<string> js文件根路径,必须是web发布的根路径")
 //var cssdir = flag.String("cssdir", "test", "-cssdir=<string> css文件根路径,必须是web发布的根路径")
-var replace = flag.Bool("replace", false, "-replace=<bool> true will be replace source file, fase will add 'k.merge' flag")
+var replace = flag.Bool("replace", false, "-replace=<bool> 'true' will be replace source file, 'fase' will add 'k.merge' flag")
 
 func main() {
 	flag.Parse()

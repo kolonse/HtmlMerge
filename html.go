@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,6 +11,13 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+var reg = regexp.MustCompile("^(https?://|//)")
+var reg1 = regexp.MustCompile("url\\(\\s*('|\")(.+?)('|\")\\s*\\)")
+var reg2 = regexp.MustCompile("url\\(\\s*('|\")(.+)('|\")\\s*\\)")
+
+var reg3 = regexp.MustCompile("url\\(\\s*([^'\"]+?)\\s*\\)")
+var reg4 = regexp.MustCompile("url\\(\\s*([^'\"]+)\\s*\\)")
 
 func load() *goquery.Document {
 	file, err := os.Open(*html)
@@ -31,8 +37,10 @@ func getFilePath(root string, src string) string {
 		path, _ := filepath.Abs(filepath.Join(root, src))
 		return path
 	}
-	path, _ := filepath.Abs(filepath.Join(filepath.Dir(*html), src))
-	return path
+	hpath, _ := filepath.Abs(*html)
+	hpath = filepath.Dir(hpath)
+	hdirpath, _ := filepath.Abs(*htmldir)
+	return filepath.Join(root, hpath[len(hdirpath):], src)
 }
 
 func readFile(root string, src string) string {
@@ -45,15 +53,43 @@ func readFile(root string, src string) string {
 	return string(buf)
 }
 
+func _modifyUrl(root, pfile, url string) string {
+	if reg.Match([]byte(url)) {
+		return url
+	}
+	if url[0] == '/' {
+		return url
+	}
+	r, _ := filepath.Abs(root)
+	p, _ := filepath.Abs(filepath.Join(filepath.Dir(filepath.Join(root, pfile)), url))
+	return strings.Replace(p[len(r):], "\\", "/", -1)
+}
+
+func modifyUrl(root, pfile, s string) string {
+	s = string(reg1.ReplaceAllFunc([]byte(s), func(p1 []byte) []byte {
+		match := reg2.FindSubmatchIndex(p1)
+		return reg2.ExpandString(nil, "url("+
+			string(p1[match[2]:match[3]])+
+			_modifyUrl(root, pfile, string(p1[match[4]:match[5]]))+
+			string(p1[match[2]:match[3]])+
+			")", string(p1), match)
+	}))
+
+	return string(reg3.ReplaceAllFunc([]byte(s), func(p1 []byte) []byte {
+		match := reg4.FindSubmatchIndex(p1)
+		return reg4.ExpandString(nil, "url("+
+			_modifyUrl(root, pfile, string(p1[match[2]:match[3]]))+
+			")", string(p1), match)
+	}))
+}
+
 func mergeFile(root, flag string, q Queue) string {
-	fmt.Println("once process:")
 	str := ""
 	for i := 0; i < len(q); i++ {
 		hl, _ := (q[i].(*goquery.Selection)).Attr(flag)
-		fmt.Println(flag, " ->", hl)
-		str += readFile(root, hl)
+		s := readFile(root, hl)
+		str += modifyUrl(root, hl, s) + "\r\n"
 	}
-	fmt.Println()
 	return str
 }
 
@@ -67,7 +103,7 @@ func writeFile(root, suffix, content string) string {
 	name := getNewFile(content, suffix)
 	path := filepath.Join(root, name)
 	ioutil.WriteFile(path, []byte(content), 666)
-	return "/" + strings.Replace(path, "\\", "/", len(path))
+	return "/" + name
 }
 
 func replaceNode(node *goquery.Selection, q Queue, flag, newSrc string) {
@@ -86,7 +122,7 @@ func replaceNode(node *goquery.Selection, q Queue, flag, newSrc string) {
 func mergeScript(node *goquery.Selection, q *Queue) {
 	jsQueue := NewQueue()
 	jsFlag := -1
-	reg := regexp.MustCompile("^(https?://|//)")
+
 	node.Each(func(i int, n *goquery.Selection) {
 		if n.Is("script") { // 处理 css link
 			src, exist := n.Attr("src")
@@ -94,6 +130,9 @@ func mergeScript(node *goquery.Selection, q *Queue) {
 				return
 			}
 			if reg.Match([]byte(src)) {
+				return
+			}
+			if _, exist = n.Attr("defer"); exist {
 				return
 			}
 			if i != jsFlag+1 && !jsQueue.Empty() && jsQueue.Size() != 1 {
@@ -130,7 +169,7 @@ func mergeCss(node *goquery.Selection, q *Queue) {
 		}
 
 		if i != cssFlag+1 && !cssQueue.Empty() && cssQueue.Size() != 1 {
-			newsrc := writeFile(*cssdir, ".css", mergeFile(*jsdir, "href", cssQueue))
+			newsrc := writeFile(*cssdir, ".css", mergeFile(*cssdir, "href", cssQueue))
 			replaceNode(node, cssQueue, "link", newsrc)
 			cssQueue.Clear()
 		}
@@ -141,7 +180,7 @@ func mergeCss(node *goquery.Selection, q *Queue) {
 	})
 
 	if !cssQueue.Empty() && cssQueue.Size() != 1 {
-		newsrc := writeFile(*cssdir, ".css", mergeFile(*jsdir, "href", cssQueue))
+		newsrc := writeFile(*cssdir, ".css", mergeFile(*cssdir, "href", cssQueue))
 		replaceNode(node, cssQueue, "link", newsrc)
 	}
 }

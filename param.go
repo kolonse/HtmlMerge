@@ -15,7 +15,9 @@ func paramCheck() {
 	if *cssdir == INVALID_DIR {
 		panic(errors.New("必须设置 -cssdir 为有效路径"))
 	}
-
+	if *htmldir == INVALID_DIR {
+		panic(errors.New("必须设置 -htmldir 为有效路径"))
+	}
 	_, err := os.Stat(*html)
 	if err != nil {
 		panic(err)
