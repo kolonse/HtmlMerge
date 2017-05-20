@@ -1,0 +1,27 @@
+.k-table {
+	padding: 10px;
+	overflow :auto;
+	display: block;
+	position: relative;
+}
+
+.k-table>.paper-plugin {
+	max-height: 20px;
+}
+
+.k-table>.paper-plugin .btn {
+	padding: 2px 7px;
+}
+
+/*.k-table>.k-table-tips {
+	display:none;
+	color:#fff;
+	background: rgba(0,0,0,0.6);
+	padding:3px 0;
+	text-align: center;
+	width:100%
+}*/
+
+/*.k-table>.k-table-config {
+	display: none;
+}*/
