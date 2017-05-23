@@ -19,6 +19,8 @@ var reg2 = regexp.MustCompile("url\\(\\s*('|\")(.+)('|\")\\s*\\)")
 var reg3 = regexp.MustCompile("url\\(\\s*([^'\"]+?)\\s*\\)")
 var reg4 = regexp.MustCompile("url\\(\\s*([^'\"]+)\\s*\\)")
 
+var mergeFileList map[string]bool
+
 func load() *goquery.Document {
 	file, err := os.Open(*html)
 	if err != nil {
@@ -40,16 +42,19 @@ func getFilePath(root string, src string) string {
 	hpath, _ := filepath.Abs(*html)
 	hpath = filepath.Dir(hpath)
 	hdirpath, _ := filepath.Abs(*htmldir)
-	return filepath.Join(root, hpath[len(hdirpath):], src)
+	ret, _ := filepath.Abs(filepath.Join(root, hpath[len(hdirpath):], src))
+	return ret
 }
 
 func readFile(root string, src string) string {
-	f, err := os.Open(getFilePath(root, src))
+	fpath := getFilePath(root, src)
+	f, err := os.Open(fpath)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 	buf, _ := ioutil.ReadAll(f)
+	mergeFileList[fpath] = true
 	return string(buf)
 }
 
@@ -204,4 +209,8 @@ func run() {
 	}
 	h, _ := doc.Html()
 	ioutil.WriteFile(f, []byte(h), 666)
+}
+
+func init() {
+	mergeFileList = make(map[string]bool)
 }

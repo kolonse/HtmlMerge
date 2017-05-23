@@ -21,6 +21,9 @@ use `HtmlMerge -h` for detail
 > -replace
 > 
 >     -replace=<bool> 'true' will be replace source file, 'fase' will add 'k.merge' flag
+> -outfile
+> 
+>     -outfile=<bool> true will out source file to stdout;false not
 # example: #
 
     HtmlMerge -html=test/test.html -jsdir=test -cssdir=test -htmldir=test
