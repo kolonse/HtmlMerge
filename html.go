@@ -140,6 +140,9 @@ func mergeScript(node *goquery.Selection, q *Queue) {
 			if _, exist = n.Attr("defer"); exist {
 				return
 			}
+			if _, exist = n.Attr("nomerge"); exist {
+				return
+			}
 			if i != jsFlag+1 && !jsQueue.Empty() && jsQueue.Size() != 1 {
 				newsrc := writeFile(*jsdir, ".js", mergeFile(*jsdir, "src", jsQueue))
 				replaceNode(node, jsQueue, "script", newsrc)
