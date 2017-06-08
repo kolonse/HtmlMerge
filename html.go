@@ -127,7 +127,6 @@ func replaceNode(node *goquery.Selection, q Queue, flag, newSrc string) {
 func mergeScript(node *goquery.Selection, q *Queue) {
 	jsQueue := NewQueue()
 	jsFlag := -1
-
 	node.Each(func(i int, n *goquery.Selection) {
 		if n.Is("script") { // 处理 css link
 			src, exist := n.Attr("src")
@@ -146,6 +145,8 @@ func mergeScript(node *goquery.Selection, q *Queue) {
 			if i != jsFlag+1 && !jsQueue.Empty() && jsQueue.Size() != 1 {
 				newsrc := writeFile(*jsdir, ".js", mergeFile(*jsdir, "src", jsQueue))
 				replaceNode(node, jsQueue, "script", newsrc)
+				jsQueue.Clear()
+			} else if i != jsFlag+1 && jsQueue.Size() == 1 {
 				jsQueue.Clear()
 			}
 
